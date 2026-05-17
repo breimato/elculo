@@ -1,0 +1,78 @@
+.card {
+  width: 60px;
+  height: 90px;
+  border-radius: 8px;
+  background: #fff;
+  border: 2px solid var(--card-color, #888);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+  color: var(--card-color, #333);
+  font-weight: 700;
+}
+
+.card:hover:not(.card--disabled) {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.card--selected {
+  transform: translateY(-14px) !important;
+  box-shadow: 0 10px 24px rgba(201, 162, 39, 0.7) !important;
+  border-color: #c9a227 !important;
+  background: #fffde7;
+}
+
+.card--disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.card--back {
+  background: linear-gradient(135deg, #1a3a1a 25%, #2d5a27 50%, #1a3a1a 75%);
+  border-color: #c9a227;
+  cursor: default;
+}
+
+.card__back-pattern {
+  width: 44px;
+  height: 74px;
+  border: 2px solid rgba(201, 162, 39, 0.4);
+  border-radius: 4px;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 5px,
+    rgba(201, 162, 39, 0.1) 5px,
+    rgba(201, 162, 39, 0.1) 10px
+  );
+}
+
+.card__corner {
+  position: absolute;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.card__corner--top {
+  top: 5px;
+  left: 7px;
+}
+
+.card__corner--bottom {
+  bottom: 5px;
+  right: 7px;
+  transform: rotate(180deg);
+}
+
+.card__suit {
+  font-size: 28px;
+  line-height: 1;
+}

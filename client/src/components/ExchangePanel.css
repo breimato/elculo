@@ -1,0 +1,67 @@
+.exchange-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 16px;
+  max-width: 700px;
+  width: 100%;
+}
+
+.exchange-panel--waiting {
+  opacity: 0.8;
+}
+
+.exchange-panel__title {
+  font-size: 22px;
+  color: #c9a227;
+  margin: 0;
+}
+
+.exchange-panel__instruction {
+  font-size: 15px;
+  color: #e8d5a0;
+  margin: 0;
+}
+
+.exchange-panel__hand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.exchange-panel__hand--display .card {
+  cursor: default;
+}
+
+.exchange-panel__hint {
+  font-size: 13px;
+  color: #7a8a6a;
+  margin: 0;
+}
+
+.exchange-panel__btn {
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #c9a227, #8b6914);
+  border: none;
+  color: #1a1a0a;
+  transition: all 0.2s;
+}
+
+.exchange-panel__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.exchange-panel__btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(201, 162, 39, 0.4);
+}

@@ -35,7 +35,7 @@ export function Lobby() {
 
       await connectStomp(() => {
         // 1. Subscribe FIRST so we don't miss the broadcast
-        subscribeRoomTopic(roomCode, setRoomState);
+        subscribeRoomTopic(roomCode, { onRoomState: setRoomState });
         subscribeClientTopics(storedClientId, {
           onJoined: () => undefined,
           onError: setError,

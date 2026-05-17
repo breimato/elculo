@@ -40,7 +40,7 @@ export function Home() {
         // subscriptions must happen here, inside onConnect
         const unsubClient = subscribeClientTopics(clientId, {
           onJoined: (joinedRoom) => {
-            subscribeRoomTopic(joinedRoom.roomCode, setRoomState);
+            subscribeRoomTopic(joinedRoom.roomCode, { onRoomState: setRoomState });
             handleJoined(joinedRoom.roomCode, joinedRoom.playerId);
             unsubClient();
           },

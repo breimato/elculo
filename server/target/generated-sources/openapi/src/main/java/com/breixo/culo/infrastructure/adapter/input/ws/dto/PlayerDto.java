@@ -21,7 +21,7 @@ import jakarta.annotation.Generated;
  */
 
 @JsonTypeName("Player")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T00:12:02.220634600+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T00:38:40.153956800+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
 public class PlayerDto {
 
   private String id;
@@ -31,6 +31,8 @@ public class PlayerDto {
   private Boolean connected;
 
   private PlayerRoleDto role;
+
+  private Integer cardCount;
 
   public PlayerDto id(String id) {
     this.id = id;
@@ -112,6 +114,26 @@ public class PlayerDto {
     this.role = role;
   }
 
+  public PlayerDto cardCount(Integer cardCount) {
+    this.cardCount = cardCount;
+    return this;
+  }
+
+  /**
+   * Get cardCount
+   * @return cardCount
+   */
+  
+  @Schema(name = "cardCount", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+  @JsonProperty("cardCount")
+  public Integer getCardCount() {
+    return cardCount;
+  }
+
+  public void setCardCount(Integer cardCount) {
+    this.cardCount = cardCount;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -124,12 +146,13 @@ public class PlayerDto {
     return Objects.equals(this.id, player.id) &&
         Objects.equals(this.nick, player.nick) &&
         Objects.equals(this.connected, player.connected) &&
-        Objects.equals(this.role, player.role);
+        Objects.equals(this.role, player.role) &&
+        Objects.equals(this.cardCount, player.cardCount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, nick, connected, role);
+    return Objects.hash(id, nick, connected, role, cardCount);
   }
 
   @Override
@@ -140,6 +163,7 @@ public class PlayerDto {
     sb.append("    nick: ").append(toIndentedString(nick)).append("\n");
     sb.append("    connected: ").append(toIndentedString(connected)).append("\n");
     sb.append("    role: ").append(toIndentedString(role)).append("\n");
+    sb.append("    cardCount: ").append(toIndentedString(cardCount)).append("\n");
     sb.append("}");
     return sb.toString();
   }
@@ -172,6 +196,7 @@ public class PlayerDto {
       this.instance.setNick(value.nick);
       this.instance.setConnected(value.connected);
       this.instance.setRole(value.role);
+      this.instance.setCardCount(value.cardCount);
       return this;
     }
 
@@ -192,6 +217,11 @@ public class PlayerDto {
     
     public PlayerDto.Builder role(PlayerRoleDto role) {
       this.instance.role(role);
+      return this;
+    }
+    
+    public PlayerDto.Builder cardCount(Integer cardCount) {
+      this.instance.cardCount(cardCount);
       return this;
     }
     

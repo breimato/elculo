@@ -1,0 +1,3 @@
+com\breixo\culo\application\usecase\room\CreateRoomUseCaseImplTest.class
+com\breixo\culo\application\usecase\room\JoinRoomUseCaseImplTest.class
+com\breixo\culo\application\usecase\room\StartGameUseCaseImplTest.class

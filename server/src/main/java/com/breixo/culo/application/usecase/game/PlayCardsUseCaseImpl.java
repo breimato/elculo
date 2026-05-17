@@ -10,6 +10,7 @@ import com.breixo.culo.domain.exception.constants.GameExceptionConstants;
 import com.breixo.culo.domain.exception.constants.RoomExceptionConstants;
 import com.breixo.culo.domain.model.Card;
 import com.breixo.culo.domain.model.Play;
+import com.breixo.culo.domain.model.Round;
 import com.breixo.culo.domain.model.Room;
 import com.breixo.culo.domain.model.game.PlayResult;
 import com.breixo.culo.domain.port.input.game.PlayCardsUseCase;
@@ -56,6 +57,11 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
 
     if (isAsOros) {
       round.reset();
+    } else if (plin) {
+      final var skippedPlayerId = room.getActivePlayerCount() > 2
+          ? room.getNextActivePlayerId()
+          : null;
+      round.registerPlinPlay(play, player.getId(), skippedPlayerId);
     } else {
       round.registerPlay(play, player.getId());
     }
@@ -66,11 +72,16 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
       gameEnded = room.registerPlayerOut(player.getId());
     }
 
+    boolean roundEndedByPlin = false;
     if (gameEnded) {
       room.setPhase(GamePhase.EXCHANGE);
       this.triggerAutoExchange(room);
-    } else {
-      room.advanceTurn(plin && !isAsOros);
+    } else if (!isAsOros) {
+      final var skipNextPlayer = plin && room.getActivePlayerCount() > 2;
+      room.advanceTurn(skipNextPlayer);
+      if (plin && this.closeRoundIfOthersAllPassed(room, round)) {
+        roundEndedByPlin = true;
+      }
     }
 
     final var savedRoom = this.roomPersistencePort.save(room);
@@ -79,9 +90,32 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
         .playerId(player.getId())
         .play(play)
         .plin(plin && !isAsOros)
-        .roundEnded(isAsOros)
+        .roundEnded(isAsOros || roundEndedByPlin)
         .gameEnded(gameEnded)
         .build();
+  }
+
+  /**
+   * Cierra la ronda si no queda nadie por pasar (p. ej. plin en partida de 2).
+   *
+   * @return true si la ronda se cerró
+   */
+  private boolean closeRoundIfOthersAllPassed(final Room room, final Round round) {
+    final var activePlayerIds = room.getPlayerOrder().stream()
+        .filter(id -> !room.isPlayerOut(id))
+        .toList();
+    if (!RULE_ENGINE.isRoundOver(round, activePlayerIds)) {
+      return false;
+    }
+    final var winnerId = round.getLastPlayerId();
+    round.reset();
+    if (winnerId != null) {
+      final var winnerIdx = room.getPlayerOrder().indexOf(winnerId);
+      if (winnerIdx >= 0) {
+        room.setCurrentPlayerIndex(winnerIdx);
+      }
+    }
+    return true;
   }
 
   private List<Card> toCards(final PlayCardsCommand command, final Room room, final String playerId) {

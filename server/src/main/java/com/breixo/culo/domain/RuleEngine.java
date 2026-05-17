@@ -3,6 +3,8 @@ package com.breixo.culo.domain;
 import com.breixo.culo.domain.model.Play;
 import com.breixo.culo.domain.model.Round;
 
+import java.util.List;
+
 /**
  * Motor de reglas puro del juego. Sin dependencias de framework.
  */
@@ -43,16 +45,31 @@ public class RuleEngine {
     }
 
     /**
-     * Determina si la ronda ha terminado, es decir, todos han pasado en cadena.
+     * Determina si la ronda ha terminado: todos los jugadores activos excepto
+     * quien hizo la última jugada han pasado al menos una vez.
      *
-     * @param round          estado de la ronda
-     * @param activePlayerCount número de jugadores con cartas en mano
+     * @param round            estado de la ronda
+     * @param activePlayerIds  ids de jugadores con cartas en mano
      * @return true si la ronda debe cerrarse
      */
-    public boolean isRoundOver(final Round round, final int activePlayerCount) {
+    public boolean isRoundOver(final Round round, final List<String> activePlayerIds) {
         if (round.isOpen()) {
             return false;
         }
-        return round.getConsecutivePasses() >= activePlayerCount - 1;
+        final var lastPlayerId = round.getLastPlayerId();
+        final var skippedPlayerId = round.getSkippedPlayerId();
+        final var othersMustPass = activePlayerIds.stream()
+                .filter(id -> !id.equals(lastPlayerId))
+                .filter(id -> skippedPlayerId == null || !id.equals(skippedPlayerId))
+                .count();
+        if (othersMustPass == 0) {
+            return skippedPlayerId != null;
+        }
+        final var othersWhoPassed = activePlayerIds.stream()
+                .filter(id -> !id.equals(lastPlayerId))
+                .filter(id -> skippedPlayerId == null || !id.equals(skippedPlayerId))
+                .filter(id -> round.getPlayersPassedSinceLastPlay().contains(id))
+                .count();
+        return othersWhoPassed >= othersMustPass;
     }
 }

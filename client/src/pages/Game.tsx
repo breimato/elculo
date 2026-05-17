@@ -10,6 +10,7 @@ import TablePile, { type TablePilePlay } from '../components/TablePile';
 import { useGameStore } from '../store/gameStore';
 import type { Card, PlayMade } from '../types/game';
 import { isSameCard } from '../utils/cards';
+import { isPlayLegal, isRoundOpen } from '../utils/gameRules';
 import {
   sendCuloSwapInitiate,
   sendCuloSwapVote,
@@ -86,12 +87,20 @@ const Game: React.FC = () => {
       showNotification(`${nick} jugó ${pm.cards.length} carta(s)${suffix}`);
 
       if (pm.playerId === playerIdRef.current && isFlyingRef.current) {
+        setFlyingCards([...lastLocalPlayRef.current]);
         return;
       }
       showTablePlay(pm.cards, nick);
     },
     [showTablePlay],
   );
+
+  const abortPendingPlay = useCallback(() => {
+    isFlyingRef.current = false;
+    setFlyingCards(null);
+    setHiddenFromHand([]);
+    setSelectedCards([...lastLocalPlayRef.current]);
+  }, []);
 
   const handleFlyComplete = useCallback(() => {
     setFlyingCards(null);
@@ -108,7 +117,12 @@ const Game: React.FC = () => {
     }
 
     const unsubRoom = subscribeRoomTopic(roomCode, {
-      onRoomState: (rs) => setRoomState(rs),
+      onRoomState: (rs) => {
+        setRoomState(rs);
+        if (isRoundOpen(rs)) {
+          setCenterPlay(null);
+        }
+      },
       onPlayMade: handlePlayMade,
       onRoundEnded: (re) => {
         setCenterPlay(null);
@@ -134,6 +148,9 @@ const Game: React.FC = () => {
     const unsubClient = subscribeClientTopics(clientId, {
       onJoined: () => {},
       onError: (err) => {
+        if (isFlyingRef.current) {
+          abortPendingPlay();
+        }
         setError(err);
         showNotification(`Error: ${err.message}`);
       },
@@ -148,7 +165,18 @@ const Game: React.FC = () => {
     return () => {
       cleanupRef.current.forEach((fn) => fn());
     };
-  }, [roomCode, playerId, clientId, navigate, setRoomState, setHand, setRanking, setError, handlePlayMade]);
+  }, [
+    roomCode,
+    playerId,
+    clientId,
+    navigate,
+    setRoomState,
+    setHand,
+    setRanking,
+    setError,
+    handlePlayMade,
+    abortPendingPlay,
+  ]);
 
   if (!roomState || !playerId) {
     return (
@@ -163,7 +191,7 @@ const Game: React.FC = () => {
   if (!myPlayer) {
     return (
       <div className="game-loading">
-        <motion.div className="spinner" />
+        <div className="spinner" />
         <p>Conectando a la partida…</p>
       </div>
     );
@@ -183,12 +211,11 @@ const Game: React.FC = () => {
   };
 
   const handlePlay = () => {
-    if (selectedCards.length === 0 || !roomCode) return;
+    if (selectedCards.length === 0 || !roomCode || !isPlayLegal(selectedCards, roomState)) return;
     const cards = [...selectedCards];
     lastLocalPlayRef.current = cards;
     isFlyingRef.current = true;
     setHiddenFromHand(cards);
-    setFlyingCards(cards);
     setSelectedCards([]);
     sendPlayCards(clientId, roomCode, cards);
   };
@@ -222,7 +249,10 @@ const Game: React.FC = () => {
 
   const otherPlayers = roomState.players.filter((p) => p.id !== playerId);
 
-  const canPlay = isMyTurn && phase === 'PLAYING' && selectedCards.length > 0 && !flyingCards;
+  const selectionLegal =
+    selectedCards.length > 0 && isPlayLegal(selectedCards, roomState);
+  const canPlay =
+    isMyTurn && phase === 'PLAYING' && selectionLegal && !flyingCards && !hiddenFromHand.length;
 
   // ─── EXCHANGE phase ────────────────────────────────────────────────────────
   if (phase === 'EXCHANGE') {
@@ -336,8 +366,8 @@ const Game: React.FC = () => {
 
       <div className="game__table">
         <div className="game__round-info">
-          <span>{REQ_LABEL[roomState.roundRequirement] ?? 'Libre'}</span>
-          {roomState.lastRankName && (
+          <span>{isRoundOpen(roomState) ? 'Libre' : (REQ_LABEL[roomState.roundRequirement] ?? 'Libre')}</span>
+          {!isRoundOpen(roomState) && roomState.lastRankName && (
             <span className="game__last-rank">Mínimo: {RANK_LABEL[roomState.lastRankName]}</span>
           )}
         </div>

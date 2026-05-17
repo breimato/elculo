@@ -178,6 +178,19 @@ public class Room {
         return this.playerOrder.get(this.currentPlayerIndex);
     }
 
+    /** Siguiente jugador activo en el orden de turno (desde el jugador actual). */
+    public String getNextActivePlayerId() {
+        final int n = this.playerOrder.size();
+        for (int step = 1; step <= n; step++) {
+            final var nextIdx = (this.currentPlayerIndex + step) % n;
+            final var playerId = this.playerOrder.get(nextIdx);
+            if (!this.isPlayerOut(playerId)) {
+                return playerId;
+            }
+        }
+        return null;
+    }
+
     /**
      * Avanza el turno al siguiente jugador activo (con cartas).
      *

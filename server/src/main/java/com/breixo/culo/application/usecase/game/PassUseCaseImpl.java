@@ -7,11 +7,15 @@ import com.breixo.culo.domain.exception.GameException;
 import com.breixo.culo.domain.exception.RoomException;
 import com.breixo.culo.domain.exception.constants.GameExceptionConstants;
 import com.breixo.culo.domain.exception.constants.RoomExceptionConstants;
+import com.breixo.culo.domain.model.Room;
+import com.breixo.culo.domain.model.Round;
 import com.breixo.culo.domain.model.game.PassResult;
 import com.breixo.culo.domain.port.input.game.PassUseCase;
 import com.breixo.culo.domain.port.output.room.RoomPersistencePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -36,18 +40,13 @@ public class PassUseCaseImpl implements PassUseCase {
     }
 
     final var round = room.getCurrentRound();
-    round.registerPass();
+    round.registerPass(player.getId());
 
-    final var roundEnded = RULE_ENGINE.isRoundOver(round, room.getActivePlayerCount());
-    if (roundEnded) {
-      final var winnerId = round.getLastPlayerId();
-      round.reset();
-      if (winnerId != null) {
-        final var winnerIdx = room.getPlayerOrder().indexOf(winnerId);
-        room.setCurrentPlayerIndex(winnerIdx);
-      }
-    } else {
+    final var activePlayerIds = this.activePlayerIds(room);
+    var roundEnded = this.closeRoundIfOthersAllPassed(room, round, activePlayerIds);
+    if (!roundEnded) {
       room.advanceTurn(false);
+      roundEnded = this.closeRoundIfOthersAllPassed(room, round, activePlayerIds);
     }
 
     final var savedRoom = this.roomPersistencePort.save(room);
@@ -56,5 +55,35 @@ public class PassUseCaseImpl implements PassUseCase {
         .playerId(player.getId())
         .roundEnded(roundEnded)
         .build();
+  }
+
+  private List<String> activePlayerIds(final Room room) {
+    return room.getPlayerOrder().stream()
+        .filter(id -> !room.isPlayerOut(id))
+        .toList();
+  }
+
+  /**
+   * Cierra la ronda si todos los demás jugadores activos han pasado.
+   * El ganador (último en jugar) abre la siguiente ronda en libertad.
+   *
+   * @return true si la ronda se cerró
+   */
+  private boolean closeRoundIfOthersAllPassed(
+      final Room room,
+      final Round round,
+      final List<String> activePlayerIds) {
+    if (!RULE_ENGINE.isRoundOver(round, activePlayerIds)) {
+      return false;
+    }
+    final var winnerId = round.getLastPlayerId();
+    round.reset();
+    if (winnerId != null) {
+      final var winnerIdx = room.getPlayerOrder().indexOf(winnerId);
+      if (winnerIdx >= 0) {
+        room.setCurrentPlayerIndex(winnerIdx);
+      }
+    }
+    return true;
   }
 }

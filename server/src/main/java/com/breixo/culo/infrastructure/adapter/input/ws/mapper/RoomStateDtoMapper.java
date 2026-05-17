@@ -23,6 +23,9 @@ public class RoomStateDtoMapper {
   /** The player role mapper. */
   private final PlayerRoleMapper playerRoleMapper;
 
+  /** The card dto mapper. */
+  private final CardDtoMapper cardDtoMapper;
+
   public RoomStateDto toRoomStateDto(final Room room) {
     final var round = room.getCurrentRound();
     final var lastRankName = toCardRankNameDto(round == null ? null : round.getLastRank());
@@ -38,6 +41,9 @@ public class RoomStateDtoMapper {
         .currentPlayerId(room.getCurrentPlayerId())
         .roundRequirement(round == null ? 0 : round.getRequirement())
         .lastRankName(lastRankName)
+        .lastPlayedCards(round == null
+            ? List.of()
+            : this.cardDtoMapper.toCardDtoList(round.getLastPlayedCards()))
         .culoSwapInitiatorId(room.getCuloSwapInitiatorId())
         .culoSwapTargetId(room.getCuloSwapTargetId())
         .build();

@@ -27,7 +27,7 @@ import jakarta.annotation.Generated;
  */
 
 @JsonTypeName("RoomState")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T00:38:40.153956800+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T01:54:00.528300900+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
 public class RoomStateDto {
 
   private String roomCode;

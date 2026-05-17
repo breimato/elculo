@@ -3,12 +3,24 @@
   flex-direction: row;
   align-items: flex-end;
   justify-content: center;
-  gap: 8px;
   flex-wrap: nowrap;
   overflow-x: auto;
-  padding: 8px 16px 16px;
+  overflow-y: visible;
+  padding: 12px 24px 20px;
+  min-height: 220px;
+  gap: 0;
 }
 
 .hand__card-wrapper {
+  margin-left: -32px;
   transition: transform 0.2s ease;
+  position: relative;
+}
+
+.hand__card-wrapper:first-child {
+  margin-left: 0;
+}
+
+.hand__card-wrapper:hover {
+  z-index: 5;
 }

@@ -1,13 +1,15 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CardComponent from '../components/CardComponent';
 import CuloSwapModal from '../components/CuloSwapModal';
 import ExchangePanel from '../components/ExchangePanel';
+import FlyingPlayAnimation from '../components/FlyingPlayAnimation';
 import Hand from '../components/Hand';
 import PlayerSlot from '../components/PlayerSlot';
+import TablePile, { type TablePilePlay } from '../components/TablePile';
 import { useGameStore } from '../store/gameStore';
-import type { Card } from '../types/game';
+import type { Card, PlayMade } from '../types/game';
+import { isSameCard } from '../utils/cards';
 import {
   sendCuloSwapInitiate,
   sendCuloSwapVote,
@@ -49,18 +51,55 @@ const Game: React.FC = () => {
   const [selectedCards, setSelectedCards] = useState<Card[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
   const [swapTarget, setSwapTarget] = useState<string | null>(null);
+  const [centerPlay, setCenterPlay] = useState<TablePilePlay | null>(null);
+  const [flyingCards, setFlyingCards] = useState<Card[] | null>(null);
+  const [hiddenFromHand, setHiddenFromHand] = useState<Card[]>([]);
 
   const cleanupRef = useRef<(() => void)[]>([]);
+  const isFlyingRef = useRef(false);
+  const pileKeyRef = useRef(0);
+  const lastLocalPlayRef = useRef<Card[]>([]);
+  const playerIdRef = useRef(playerId);
+  playerIdRef.current = playerId;
 
-  const myPlayer = roomState?.players.find((p) => p.id === playerId) ?? null;
-  const isMyTurn = roomState?.currentPlayerId === playerId;
-  const isCulo = myPlayer?.role === 'CULO';
-  const phase = roomState?.phase ?? 'LOBBY';
+  const bumpPileKey = () => {
+    pileKeyRef.current += 1;
+    return pileKeyRef.current;
+  };
+
+  const resolveNick = (pid: string) =>
+    useGameStore.getState().roomState?.players.find((p) => p.id === pid)?.nick ?? '?';
+
+  const showTablePlay = useCallback((cards: Card[], playerNick: string) => {
+    setCenterPlay({ cards, playerNick, key: bumpPileKey() });
+  }, []);
 
   const showNotification = (msg: string) => {
     setNotification(msg);
     setTimeout(() => setNotification(null), 3000);
   };
+
+  const handlePlayMade = useCallback(
+    (pm: PlayMade) => {
+      const nick = resolveNick(pm.playerId);
+      const suffix = pm.plin ? ' ¡PLIN!' : pm.isAsOros ? ' ¡As de Oros!' : '';
+      showNotification(`${nick} jugó ${pm.cards.length} carta(s)${suffix}`);
+
+      if (pm.playerId === playerIdRef.current && isFlyingRef.current) {
+        return;
+      }
+      showTablePlay(pm.cards, nick);
+    },
+    [showTablePlay],
+  );
+
+  const handleFlyComplete = useCallback(() => {
+    setFlyingCards(null);
+    isFlyingRef.current = false;
+    const myNick = resolveNick(playerIdRef.current ?? '');
+    showTablePlay(lastLocalPlayRef.current, myNick);
+    setHiddenFromHand([]);
+  }, [showTablePlay]);
 
   useEffect(() => {
     if (!roomCode || !playerId || !clientId) {
@@ -70,15 +109,11 @@ const Game: React.FC = () => {
 
     const unsubRoom = subscribeRoomTopic(roomCode, {
       onRoomState: (rs) => setRoomState(rs),
-      onPlayMade: (pm) => {
-        const player = roomState?.players.find((p) => p.id === pm.playerId);
-        const nick = player?.nick ?? pm.playerId;
-        const suffix = pm.plin ? ' ¡PLIN!' : pm.isAsOros ? ' ¡As de Oros!' : '';
-        showNotification(`${nick} jugó ${pm.cards.length} carta(s)${suffix}`);
-      },
+      onPlayMade: handlePlayMade,
       onRoundEnded: (re) => {
-        const player = roomState?.players.find((p) => p.id === re.winnerPlayerId);
-        showNotification(`${player?.nick ?? re.winnerPlayerId} abre nueva ronda`);
+        setCenterPlay(null);
+        const winnerNick = resolveNick(re.winnerPlayerId);
+        showNotification(`${winnerNick} abre nueva ronda`);
       },
       onGameEnded: (ge) => {
         setRanking(ge.ranking);
@@ -102,7 +137,10 @@ const Game: React.FC = () => {
         setError(err);
         showNotification(`Error: ${err.message}`);
       },
-      onHandUpdate: (hu) => setHand(hu.cards),
+      onHandUpdate: (hu) => {
+        setHand(hu.cards);
+        setHiddenFromHand([]);
+      },
     });
 
     cleanupRef.current = [unsubRoom, unsubClient];
@@ -110,72 +148,87 @@ const Game: React.FC = () => {
     return () => {
       cleanupRef.current.forEach((fn) => fn());
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomCode, playerId, clientId]);
+  }, [roomCode, playerId, clientId, navigate, setRoomState, setHand, setRanking, setError, handlePlayMade]);
 
-  if (!roomState || !myPlayer) {
+  if (!roomState || !playerId) {
+    return (
+      <motion.div className="game-loading">
+        <div className="spinner" />
+        <p>Conectando a la partida…</p>
+      </motion.div>
+    );
+  }
+
+  const myPlayer = roomState.players.find((p) => p.id === playerId);
+  if (!myPlayer) {
     return (
       <div className="game-loading">
-        <div className="spinner" />
+        <motion.div className="spinner" />
         <p>Conectando a la partida…</p>
       </div>
     );
   }
 
+  const isMyTurn = roomState.currentPlayerId === playerId;
+  const isCulo = myPlayer.role === 'CULO';
+  const phase = roomState.phase ?? 'LOBBY';
+
   const toggleCard = (card: Card) => {
-    const isIn = selectedCards.some((s) => s.suit === card.suit && s.number === card.number);
+    const isIn = selectedCards.some((s) => isSameCard(s, card));
     if (isIn) {
-      setSelectedCards(selectedCards.filter((s) => !(s.suit === card.suit && s.number === card.number)));
+      setSelectedCards(selectedCards.filter((s) => !isSameCard(s, card)));
     } else {
       setSelectedCards([...selectedCards, card]);
     }
   };
 
   const handlePlay = () => {
-    if (selectedCards.length === 0) return;
-    sendPlayCards(clientId, roomCode!, selectedCards);
+    if (selectedCards.length === 0 || !roomCode) return;
+    const cards = [...selectedCards];
+    lastLocalPlayRef.current = cards;
+    isFlyingRef.current = true;
+    setHiddenFromHand(cards);
+    setFlyingCards(cards);
     setSelectedCards([]);
+    sendPlayCards(clientId, roomCode, cards);
   };
 
   const handlePass = () => {
-    sendPass(clientId, roomCode!);
+    if (!roomCode) return;
+    sendPass(clientId, roomCode);
     setSelectedCards([]);
   };
 
   const handleDeal = () => {
-    sendDealCards(clientId, roomCode!);
+    if (!roomCode) return;
+    sendDealCards(clientId, roomCode);
   };
 
   const handleCuloSwapInitiate = () => {
-    if (!swapTarget) return;
-    sendCuloSwapInitiate(clientId, roomCode!, swapTarget);
+    if (!swapTarget || !roomCode) return;
+    sendCuloSwapInitiate(clientId, roomCode, swapTarget);
     setSwapTarget(null);
   };
 
   const handleCuloSwapVote = (accept: boolean) => {
-    sendCuloSwapVote(clientId, roomCode!, accept);
+    if (!roomCode) return;
+    sendCuloSwapVote(clientId, roomCode, accept);
   };
 
   const handleExchangeGive = (cards: Card[]) => {
-    sendExchangeGive(clientId, roomCode!, cards);
+    if (!roomCode) return;
+    sendExchangeGive(clientId, roomCode, cards);
   };
 
   const otherPlayers = roomState.players.filter((p) => p.id !== playerId);
 
-  const canPlay =
-    isMyTurn &&
-    phase === 'PLAYING' &&
-    selectedCards.length > 0;
+  const canPlay = isMyTurn && phase === 'PLAYING' && selectedCards.length > 0 && !flyingCards;
 
   // ─── EXCHANGE phase ────────────────────────────────────────────────────────
   if (phase === 'EXCHANGE') {
     return (
       <div className="game">
-        <CuloSwapModal
-          roomState={roomState}
-          myPlayerId={playerId!}
-          onVote={handleCuloSwapVote}
-        />
+        <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
         <div className="game__exchange">
           <ExchangePanel
             roomState={roomState}
@@ -184,37 +237,29 @@ const Game: React.FC = () => {
             onGive={handleExchangeGive}
           />
         </div>
-        {notification && (
-          <div className="game__notification">{notification}</div>
-        )}
+        {notification && <div className="game__notification">{notification}</div>}
       </div>
     );
   }
 
   // ─── DEALING phase ─────────────────────────────────────────────────────────
   if (phase === 'DEALING') {
-    const canDeal = isCulo || (roomState.hostPlayerId === playerId && !roomState.players.some((p) => p.role === 'CULO'));
+    const canDeal =
+      isCulo ||
+      (roomState.hostPlayerId === playerId &&
+        !roomState.players.some((p) => p.role === 'CULO'));
     const otherPlayersList = roomState.players.filter((p) => p.id !== playerId);
 
     return (
       <div className="game game--dealing">
-        <CuloSwapModal
-          roomState={roomState}
-          myPlayerId={playerId!}
-          onVote={handleCuloSwapVote}
-        />
+        <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
         <h2 className="game__phase-title">Fase de Reparto</h2>
         <div className="game__players-list">
           {roomState.players.map((p) => (
-            <PlayerSlot
-              key={p.id}
-              player={p}
-              isCurrentPlayer={false}
-              isMe={p.id === playerId}
-            />
+            <PlayerSlot key={p.id} player={p} isCurrentPlayer={false} isMe={p.id === playerId} />
           ))}
         </div>
-        {isCulo && phase === 'DEALING' && (
+        {isCulo && (
           <div className="game__swap-section">
             <h3>¿Transferir culo?</h3>
             <select
@@ -243,23 +288,16 @@ const Game: React.FC = () => {
             🃏 Repartir cartas
           </button>
         )}
-        {!canDeal && (
-          <p className="game__waiting">Esperando a que el culo reparta…</p>
-        )}
-        {notification && <div className="game__notification">{notification}</div>}
+        {!canDeal && <p className="game__waiting">Esperando a que el culo reparta…</p>}
+        {notification && <motion.div className="game__notification">{notification}</motion.div>}
       </div>
     );
   }
 
-  // ─── CULO_SWAP_VOTE phase ──────────────────────────────────────────────────
   if (phase === 'CULO_SWAP_VOTE') {
     return (
       <div className="game">
-        <CuloSwapModal
-          roomState={roomState}
-          myPlayerId={playerId!}
-          onVote={handleCuloSwapVote}
-        />
+        <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
         {notification && <div className="game__notification">{notification}</div>}
       </div>
     );
@@ -267,8 +305,11 @@ const Game: React.FC = () => {
 
   // ─── PLAYING phase ─────────────────────────────────────────────────────────
   return (
-    <div className="game">
-      {/* Notifications */}
+    <div className="game game--playing">
+      {flyingCards && (
+        <FlyingPlayAnimation cards={flyingCards} onComplete={handleFlyComplete} />
+      )}
+
       <AnimatePresence>
         {notification && (
           <motion.div
@@ -282,7 +323,6 @@ const Game: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Top: other players */}
       <div className="game__players-ring">
         {otherPlayers.map((player) => (
           <PlayerSlot
@@ -294,61 +334,38 @@ const Game: React.FC = () => {
         ))}
       </div>
 
-      {/* Center: table */}
       <div className="game__table">
-        {/* Round info */}
         <div className="game__round-info">
           <span>{REQ_LABEL[roomState.roundRequirement] ?? 'Libre'}</span>
           {roomState.lastRankName && (
-            <span className="game__last-rank">
-              Mínimo: {RANK_LABEL[roomState.lastRankName]}
-            </span>
+            <span className="game__last-rank">Mínimo: {RANK_LABEL[roomState.lastRankName]}</span>
           )}
         </div>
 
-        {/* Last played cards */}
-        <div className="game__last-play">
-          {roomState.lastPlayedCards && roomState.lastPlayedCards.length > 0 ? (
-            roomState.lastPlayedCards.map((card, i) => (
-              <CardComponent key={`last-${card.suit}-${card.number}-${i}`} card={card} />
-            ))
-          ) : (
-            <p className="game__no-play">Abre la ronda</p>
-          )}
-        </div>
+        <TablePile play={centerPlay} />
 
-        {/* My slot (current player indicator) */}
-        <PlayerSlot
-          player={myPlayer}
-          isCurrentPlayer={isMyTurn}
-          isMe={true}
-        />
+        <PlayerSlot player={myPlayer} isCurrentPlayer={isMyTurn} isMe />
       </div>
 
-      {/* Action buttons */}
       <div className="game__actions">
-        <button
-          className="btn btn--primary"
-          disabled={!canPlay}
-          onClick={handlePlay}
-        >
+        <button className="btn btn--primary" disabled={!canPlay} onClick={handlePlay}>
           ▶ Jugar ({selectedCards.length})
         </button>
         <button
           className="btn btn--secondary"
-          disabled={!isMyTurn || phase !== 'PLAYING'}
+          disabled={!isMyTurn || phase !== 'PLAYING' || !!flyingCards}
           onClick={handlePass}
         >
           ⏭ Pasar
         </button>
       </div>
 
-      {/* My hand */}
       <Hand
         cards={hand}
         selectedCards={selectedCards}
+        hiddenCards={hiddenFromHand}
         onToggleCard={toggleCard}
-        disabled={!isMyTurn}
+        disabled={!isMyTurn || !!flyingCards}
       />
     </div>
   );

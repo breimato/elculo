@@ -50,14 +50,27 @@
 
 /* ── Table (center) ─────────────────────────────────────────────────── */
 
+.game--playing {
+  min-height: 100dvh;
+}
+
+.game--playing .game__table {
+  flex: 1;
+  min-height: 0;
+}
+
+.game--playing .hand {
+  flex-shrink: 0;
+}
+
 .game__table {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 8px;
+  gap: 12px;
+  padding: 8px 16px;
 }
 
 .game__round-info {
@@ -76,18 +89,6 @@
   color: #e8d5a0;
 }
 
-.game__last-play {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  min-height: 100px;
-}
-
-.game__no-play {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.3);
-  font-style: italic;
-}
 
 /* ── Actions ─────────────────────────────────────────────────────────── */
 

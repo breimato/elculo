@@ -12,6 +12,7 @@ import { useGameStore } from '../store/gameStore';
 import type { Card, PlayMade } from '../types/game';
 import { isSameCard } from '../utils/cards';
 import { isPlayLegal, isRoundOpen } from '../utils/gameRules';
+import { mergeHandOrder, sortHandByNumber, sortHandBySuit } from '../utils/handOrder';
 import {
   sendCuloSwapInitiate,
   sendCuloSwapVote,
@@ -57,6 +58,8 @@ const Game: React.FC = () => {
   const [flyingCards, setFlyingCards] = useState<Card[] | null>(null);
   const [hiddenFromHand, setHiddenFromHand] = useState<Card[]>([]);
   const [plinSplash, setPlinSplash] = useState<{ id: number; nick: string } | null>(null);
+  const [orderedHand, setOrderedHand] = useState<Card[]>([]);
+  const [sortPulse, setSortPulse] = useState(0);
 
   const cleanupRef = useRef<(() => void)[]>([]);
   const isFlyingRef = useRef(false);
@@ -167,6 +170,10 @@ const Game: React.FC = () => {
       onHandUpdate: (hu) => {
         setHand(hu.cards);
         setHiddenFromHand([]);
+        const rs = useGameStore.getState().roomState;
+        if (rs && isRoundOpen(rs)) {
+          setCenterPlay(null);
+        }
       },
     });
 
@@ -187,6 +194,10 @@ const Game: React.FC = () => {
     handlePlayMade,
     abortPendingPlay,
   ]);
+
+  useEffect(() => {
+    setOrderedHand((prev) => mergeHandOrder(prev, hand));
+  }, [hand]);
 
   if (!roomState || !playerId) {
     return (
@@ -264,6 +275,14 @@ const Game: React.FC = () => {
   const canPlay =
     isMyTurn && phase === 'PLAYING' && selectionLegal && !flyingCards && !hiddenFromHand.length;
 
+  const displayHand = orderedHand.length > 0 ? orderedHand : hand;
+  const tablePlay = isRoundOpen(roomState) ? null : centerPlay;
+
+  const applyHandSort = (sorted: Card[]) => {
+    setOrderedHand(sorted);
+    setSortPulse((n) => n + 1);
+  };
+
   // ─── DEALING phase ─────────────────────────────────────────────────────────
   if (phase === 'DEALING') {
     const canDeal =
@@ -321,14 +340,12 @@ const Game: React.FC = () => {
     return (
       <div className="game game--exchange">
         <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
-        <div className="game__exchange">
-          <ExchangePanel
-            roomState={roomState}
-            myPlayer={myPlayer}
-            hand={hand}
-            onGive={handleExchangeGive}
-          />
-        </div>
+        <ExchangePanel
+          roomState={roomState}
+          myPlayer={myPlayer}
+          hand={hand}
+          onGive={handleExchangeGive}
+        />
         {notification && <motion.div className="game__notification">{notification}</motion.div>}
       </div>
     );
@@ -392,7 +409,7 @@ const Game: React.FC = () => {
           )}
         </div>
 
-        <TablePile play={centerPlay} />
+        <TablePile play={tablePlay} />
 
         <PlayerSlot player={myPlayer} isCurrentPlayer={isMyTurn} isMe />
       </div>
@@ -410,13 +427,33 @@ const Game: React.FC = () => {
         </button>
       </div>
 
-      <Hand
-        cards={hand}
-        selectedCards={selectedCards}
-        hiddenCards={hiddenFromHand}
-        onToggleCard={toggleCard}
-        disabled={!isMyTurn || !!flyingCards}
-      />
+      <div className="game__hand-bar">
+        <div className="game__hand-sort">
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => applyHandSort(sortHandByNumber(hand))}
+          >
+            Ordenar por número
+          </button>
+          <button
+            type="button"
+            className="btn btn--ghost"
+            onClick={() => applyHandSort(sortHandBySuit(hand))}
+          >
+            Ordenar por palo
+          </button>
+        </div>
+        <Hand
+          cards={displayHand}
+          selectedCards={selectedCards}
+          hiddenCards={hiddenFromHand}
+          onToggleCard={toggleCard}
+          onReorder={setOrderedHand}
+          sortPulse={sortPulse}
+          disabled={!!flyingCards}
+        />
+      </div>
     </div>
   );
 };

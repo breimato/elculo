@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { Card, Player, PlayerRole, RoomState } from '../types/game';
-import CardComponent from './CardComponent';
+import Hand from './Hand';
 import './ExchangePanel.css';
 
 interface ExchangePanelProps {
@@ -19,30 +19,10 @@ const ExchangePanel: React.FC<ExchangePanelProps> = ({ roomState, myPlayer, hand
   const [selected, setSelected] = useState<Card[]>([]);
   const config = ROLE_INSTRUCTION[myPlayer.role];
 
-  if (!config) {
-    const ganadorPlayer = roomState.players.find((p) => p.role === 'GANADOR');
-    return (
-      <div className="exchange-panel exchange-panel--waiting">
-        <h2>Fase de Intercambio</h2>
-        <p>
-          {myPlayer.role === 'CULO'
-            ? `${ganadorPlayer?.nick ?? 'El ganador'} elige 2 cartas de su mano para darte…`
-            : myPlayer.role === 'PENULTIMO'
-            ? `${roomState.players.find((p) => p.role === 'SUBCAMPEON')?.nick ?? 'El subcampeón'} está eligiendo…`
-            : 'Esperando al intercambio…'}
-        </p>
-        <div className="exchange-panel__hand exchange-panel__hand--display">
-          {hand.map((card, i) => (
-            <CardComponent key={`${card.suit}-${card.number}-${i}`} card={card} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  const receiver = roomState.players.find((p) => p.role === config.receiverRole);
-
   const toggleCard = (card: Card) => {
+    if (!config) {
+      return;
+    }
     const isIn = selected.some((s) => s.suit === card.suit && s.number === card.number);
     if (isIn) {
       setSelected(selected.filter((s) => !(s.suit === card.suit && s.number === card.number)));
@@ -51,36 +31,48 @@ const ExchangePanel: React.FC<ExchangePanelProps> = ({ roomState, myPlayer, hand
     }
   };
 
-  const canConfirm = selected.length === config.count;
+  const instruction = !config
+    ? myPlayer.role === 'CULO'
+      ? `${roomState.players.find((p) => p.role === 'GANADOR')?.nick ?? 'El ganador'} elige 2 cartas de su mano para darte…`
+      : myPlayer.role === 'PENULTIMO'
+      ? `${roomState.players.find((p) => p.role === 'SUBCAMPEON')?.nick ?? 'El subcampeón'} está eligiendo…`
+      : 'Esperando al intercambio…'
+    : `${config.label} (${roomState.players.find((p) => p.role === config.receiverRole)?.nick ?? '?'})`;
+
+  const receiver = config
+    ? roomState.players.find((p) => p.role === config.receiverRole)
+    : undefined;
+  const canConfirm = config ? selected.length === config.count : false;
 
   return (
-    <div className="exchange-panel">
-      <h2 className="exchange-panel__title">Intercambio de Cartas</h2>
-      <p className="exchange-panel__instruction">
-        {config.label} ({receiver?.nick ?? '?'})
-      </p>
-      <div className="exchange-panel__hand">
-        {hand.map((card, i) => (
-          <CardComponent
-            key={`${card.suit}-${card.number}-${i}`}
-            card={card}
-            selected={selected.some((s) => s.suit === card.suit && s.number === card.number)}
-            onClick={() => toggleCard(card)}
-          />
-        ))}
-      </div>
-      <div className="exchange-panel__footer">
-        <p className="exchange-panel__hint">
-          {selected.length} / {config.count} seleccionadas
-        </p>
-        <button
-          className="exchange-panel__btn"
-          disabled={!canConfirm}
-          onClick={() => onGive(selected)}
-        >
-          Dar cartas a {receiver?.nick ?? '?'}
-        </button>
-      </div>
+    <div className="exchange-view">
+      <header className="exchange-view__header">
+        <h2 className="exchange-view__title">Intercambio de Cartas</h2>
+        <p className="exchange-view__instruction">{instruction}</p>
+      </header>
+
+      <Hand
+        className="hand--exchange"
+        cards={hand}
+        selectedCards={config ? selected : []}
+        onToggleCard={toggleCard}
+        disabled={!config}
+      />
+
+      {config && (
+        <footer className="exchange-view__footer">
+          <p className="exchange-view__hint">
+            {selected.length} / {config.count} seleccionadas
+          </p>
+          <button
+            className="exchange-view__btn"
+            disabled={!canConfirm}
+            onClick={() => onGive(selected)}
+          >
+            Dar cartas a {receiver?.nick ?? '?'}
+          </button>
+        </footer>
+      )}
     </div>
   );
 };

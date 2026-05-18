@@ -7,6 +7,7 @@ import com.breixo.culo.domain.exception.RoomException;
 import com.breixo.culo.domain.exception.constants.GameExceptionConstants;
 import com.breixo.culo.domain.exception.constants.RoomExceptionConstants;
 import com.breixo.culo.domain.model.Room;
+import com.breixo.culo.domain.model.game.CuloSwapVoteResult;
 import com.breixo.culo.domain.port.input.game.CuloSwapVoteUseCase;
 import com.breixo.culo.domain.port.output.room.RoomPersistencePort;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ public class CuloSwapVoteUseCaseImpl implements CuloSwapVoteUseCase {
   private final RoomPersistencePort roomPersistencePort;
 
   @Override
-  public Room execute(final CuloSwapVoteCommand command) {
+  public CuloSwapVoteResult execute(final CuloSwapVoteCommand command) {
     final var room = this.roomPersistencePort.findByCode(command.roomCode())
         .orElseThrow(() -> new RoomException(RoomExceptionConstants.ROOM_NOT_FOUND));
     final var player = room.findPlayerByClientId(command.clientId())
@@ -28,16 +29,28 @@ public class CuloSwapVoteUseCaseImpl implements CuloSwapVoteUseCase {
     if (!room.getPhase().equals(GamePhase.CULO_SWAP_VOTE)) {
       throw new GameException(GameExceptionConstants.WRONG_PHASE);
     }
+    if (room.getCuloSwapVotes().containsKey(player.getId())) {
+      throw new GameException(GameExceptionConstants.SWAP_ALREADY_VOTED);
+    }
 
     final var allVoted = room.registerCuloSwapVote(player.getId(), command.accept());
+    var completed = false;
+    var accepted = false;
     if (allVoted) {
-      if (room.isCuloSwapApproved()) {
+      accepted = room.isCuloSwapApproved();
+      if (accepted) {
         room.applyCuloSwap();
       }
       room.clearCuloSwap();
       room.setPhase(GamePhase.DEALING);
+      completed = true;
     }
 
-    return this.roomPersistencePort.save(room);
+    final var savedRoom = this.roomPersistencePort.save(room);
+    return CuloSwapVoteResult.builder()
+        .room(savedRoom)
+        .completed(completed)
+        .accepted(accepted)
+        .build();
   }
 }

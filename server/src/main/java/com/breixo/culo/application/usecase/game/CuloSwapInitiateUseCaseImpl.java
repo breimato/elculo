@@ -40,6 +40,7 @@ public class CuloSwapInitiateUseCaseImpl implements CuloSwapInitiateUseCase {
 
     room.setCuloSwapInitiatorId(player.getId());
     room.setCuloSwapTargetId(command.targetPlayerId());
+    room.registerCuloSwapVote(player.getId(), true);
     room.setPhase(GamePhase.CULO_SWAP_VOTE);
     return this.roomPersistencePort.save(room);
   }

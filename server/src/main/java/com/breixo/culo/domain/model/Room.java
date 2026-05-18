@@ -285,14 +285,17 @@ public class Room {
     }
 
     public boolean isCuloSwapApproved() {
+        if (this.culoSwapVotes.isEmpty()) {
+            return false;
+        }
         return this.culoSwapVotes.values().stream().allMatch(Boolean.TRUE::equals);
     }
 
     public void applyCuloSwap() {
         final var initiator = this.findPlayerById(this.culoSwapInitiatorId).orElseThrow();
         final var target = this.findPlayerById(this.culoSwapTargetId).orElseThrow();
-        final var initiatorHand = new ArrayList<>(this.hands.get(this.culoSwapInitiatorId));
-        final var targetHand = new ArrayList<>(this.hands.get(this.culoSwapTargetId));
+        final var initiatorHand = new ArrayList<>(this.getHand(this.culoSwapInitiatorId));
+        final var targetHand = new ArrayList<>(this.getHand(this.culoSwapTargetId));
         initiator.setRole(target.getRole());
         target.setRole(PlayerRole.CULO);
         this.hands.put(this.culoSwapInitiatorId, targetHand);

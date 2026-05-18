@@ -1,5 +1,5 @@
 # ─── Java / Maven ────────────────────────────────────────────────────────────
-server/target/
+**/target/
 server/.mvn/wrapper/maven-wrapper.jar
 *.class
 *.jar

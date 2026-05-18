@@ -1,6 +1,5 @@
 com\breixo\culo\CuloApplication.class
 com\breixo\culo\infrastructure\config\CorsConfig.class
-com\breixo\culo\infrastructure\mapper\GamePhaseMapperImpl.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\PassRequestDto$Builder.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\StartGameRequestDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\CuloSwapVoteRequestDto$Builder.class
@@ -27,9 +26,7 @@ com\breixo\culo\infrastructure\adapter\input\ws\dto\CardDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\ExchangeGiveRequestDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\HandUpdateDto$Builder.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\PlayMadeDto$Builder.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\JoinedRoomDtoMapperImpl.class
 com\breixo\culo\domain\exception\RoomException.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\PlayCardsRequestMapperImpl.class
 com\breixo\culo\domain\model\Player.class
 com\breixo\culo\infrastructure\mapper\GamePhaseMapperImpl$1.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\RoundEndedDto.class
@@ -38,15 +35,11 @@ com\breixo\culo\infrastructure\adapter\input\ws\dto\WsErrorDto$Builder.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\CreateRoomRequestDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\CuloSwapInitiateRequestDto$Builder.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\PlayerDto$Builder.class
-com\breixo\culo\infrastructure\mapper\PlayerRoleMapperImpl.class
 com\breixo\culo\domain\port\output\room\RoomCodeGenerationPort.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\DealingConfirmRequestDto$Builder.class
 com\breixo\culo\infrastructure\adapter\input\ws\mapper\PlayerDtoMapper.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\JoinRoomRequestMapperImpl.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\CardRankNameDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\HandUpdateDto.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\CardDtoMapperImpl.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\CreateRoomRequestMapperImpl.class
 com\breixo\culo\domain\command\room\CreateRoomCommand.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\PlayCardsRequestDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\ExchangeGiveRequestDto$Builder.class
@@ -60,11 +53,9 @@ com\breixo\culo\domain\exception\constants\RoomExceptionConstants.class
 com\breixo\culo\infrastructure\config\WsDestinationConstants.class
 com\breixo\culo\infrastructure\adapter\input\ws\mapper\JoinRoomRequestMapper.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\RoomStateDto$Builder.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\ExchangeGiveRequestMapperImpl.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\JoinedRoomDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\CardDto$Builder.class
 com\breixo\culo\domain\command\room\JoinRoomCommand$JoinRoomCommandBuilder.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\StartGameRequestMapperImpl.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\PlayerDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\mapper\CardDtoMapperImpl$1.class
 com\breixo\culo\domain\PlayerRole.class
@@ -73,7 +64,6 @@ com\breixo\culo\infrastructure\adapter\input\ws\dto\RoomStateDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\RankingEntryDto.class
 com\breixo\culo\infrastructure\mapper\PlayerRoleMapper.class
 com\breixo\culo\domain\exception\CuloException.class
-com\breixo\culo\infrastructure\adapter\input\ws\mapper\PlayerDtoMapperImpl.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\DealingConfirmRequestDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\TurnChangedDto.class
 com\breixo\culo\infrastructure\adapter\input\ws\dto\PlayMadeDto.class

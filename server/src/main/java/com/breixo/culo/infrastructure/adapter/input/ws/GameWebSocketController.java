@@ -237,13 +237,12 @@ public class GameWebSocketController {
           .roomCode(culoSwapVoteRequestDto.getRoomCode())
           .accept(culoSwapVoteRequestDto.getAccept())
           .build();
-      final var roomBefore = this.roomPersistencePort.findByCode(command.roomCode()).orElseThrow();
-      final var approved = roomBefore.isCuloSwapApproved();
-      final var room = this.culoSwapVoteUseCase.execute(command);
+      final var voteResult = this.culoSwapVoteUseCase.execute(command);
+      final var room = voteResult.room();
       this.roomEventPublisher.publishRoomState(room);
-      if (room.getCuloSwapInitiatorId() == null) {
-        this.roomEventPublisher.publishCuloSwapResult(room, room.isCuloSwapApproved() || approved);
-        if (approved) {
+      if (voteResult.completed()) {
+        this.roomEventPublisher.publishCuloSwapResult(room, voteResult.accepted());
+        if (voteResult.accepted()) {
           this.roomEventPublisher.publishAllHands(room);
         }
       }

@@ -69,16 +69,18 @@ const ExchangePanel: React.FC<ExchangePanelProps> = ({ roomState, myPlayer, hand
           />
         ))}
       </div>
-      <p className="exchange-panel__hint">
-        {selected.length} / {config.count} seleccionadas
-      </p>
-      <button
-        className="exchange-panel__btn"
-        disabled={!canConfirm}
-        onClick={() => onGive(selected)}
-      >
-        Dar cartas a {receiver?.nick ?? '?'}
-      </button>
+      <div className="exchange-panel__footer">
+        <p className="exchange-panel__hint">
+          {selected.length} / {config.count} seleccionadas
+        </p>
+        <button
+          className="exchange-panel__btn"
+          disabled={!canConfirm}
+          onClick={() => onGive(selected)}
+        >
+          Dar cartas a {receiver?.nick ?? '?'}
+        </button>
+      </div>
     </div>
   );
 };

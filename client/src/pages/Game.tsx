@@ -319,7 +319,7 @@ const Game: React.FC = () => {
   // ─── EXCHANGE phase ────────────────────────────────────────────────────────
   if (phase === 'EXCHANGE') {
     return (
-      <div className="game">
+      <div className="game game--exchange">
         <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
         <div className="game__exchange">
           <ExchangePanel

@@ -217,6 +217,23 @@
   min-width: 200px;
 }
 
+.game--exchange {
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+}
+
+.game--exchange .game__exchange {
+  flex: 1 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  min-height: min-content;
+  padding: 16px 16px 40px;
+  box-sizing: border-box;
+}
+
 .game__exchange {
   flex: 1;
   display: flex;

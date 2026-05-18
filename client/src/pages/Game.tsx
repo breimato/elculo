@@ -264,24 +264,6 @@ const Game: React.FC = () => {
   const canPlay =
     isMyTurn && phase === 'PLAYING' && selectionLegal && !flyingCards && !hiddenFromHand.length;
 
-  // ─── EXCHANGE phase ────────────────────────────────────────────────────────
-  if (phase === 'EXCHANGE') {
-    return (
-      <div className="game">
-        <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
-        <div className="game__exchange">
-          <ExchangePanel
-            roomState={roomState}
-            myPlayer={myPlayer}
-            hand={hand}
-            onGive={handleExchangeGive}
-          />
-        </div>
-        {notification && <div className="game__notification">{notification}</div>}
-      </div>
-    );
-  }
-
   // ─── DEALING phase ─────────────────────────────────────────────────────────
   if (phase === 'DEALING') {
     const canDeal =
@@ -329,6 +311,24 @@ const Game: React.FC = () => {
           </button>
         )}
         {!canDeal && <p className="game__waiting">Esperando a que el culo reparta…</p>}
+        {notification && <motion.div className="game__notification">{notification}</motion.div>}
+      </div>
+    );
+  }
+
+  // ─── EXCHANGE phase ────────────────────────────────────────────────────────
+  if (phase === 'EXCHANGE') {
+    return (
+      <div className="game">
+        <CuloSwapModal roomState={roomState} myPlayerId={playerId} onVote={handleCuloSwapVote} />
+        <div className="game__exchange">
+          <ExchangePanel
+            roomState={roomState}
+            myPlayer={myPlayer}
+            hand={hand}
+            onGive={handleExchangeGive}
+          />
+        </div>
         {notification && <motion.div className="game__notification">{notification}</motion.div>}
       </div>
     );

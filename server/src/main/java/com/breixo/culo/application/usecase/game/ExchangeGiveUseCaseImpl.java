@@ -45,7 +45,8 @@ public class ExchangeGiveUseCaseImpl implements ExchangeGiveUseCase {
     room.getExchangeDone().add(player.getId());
 
     if (this.isExchangeComplete(room)) {
-      room.setPhase(GamePhase.DEALING);
+      room.getPlayers().forEach(p -> p.setRole(PlayerRole.NONE));
+      room.setPhase(GamePhase.PLAYING);
     }
 
     return this.roomPersistencePort.save(room);

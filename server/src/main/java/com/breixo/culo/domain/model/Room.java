@@ -158,7 +158,6 @@ public class Room {
                 : 0;
 
         this.players.forEach(player -> player.setRole(PlayerRole.NONE));
-        this.phase = GamePhase.PLAYING;
     }
 
     private int findTwoOfOrosPlayerIndex() {

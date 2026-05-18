@@ -6,15 +6,19 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   overflow-y: visible;
-  padding: 12px 24px 20px;
-  min-height: 220px;
+  padding: 54px 24px 22px;
+  min-height: 260px;
   gap: 0;
 }
 
 .hand__card-wrapper {
-  margin-left: -32px;
-  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  margin-left: -36px;
   position: relative;
+  transform-origin: 50% 100%;
+  z-index: calc(var(--idx) + 1);
+  transition: transform 0.22s ease, z-index 0.15s ease;
+  transform: translateY(var(--fan-lift)) rotate(var(--fan-rotate));
 }
 
 .hand__card-wrapper:first-child {
@@ -22,5 +26,9 @@
 }
 
 .hand__card-wrapper:hover {
-  z-index: 5;
+  z-index: 40;
+}
+
+.hand__card-wrapper:has(.card--selected) {
+  z-index: 50;
 }

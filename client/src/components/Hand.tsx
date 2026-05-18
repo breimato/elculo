@@ -15,6 +15,22 @@ const cardKey = (card: Card) => `${card.suit}-${card.number}`;
 
 const isSameCard = (a: Card, b: Card) => a.suit === b.suit && a.number === b.number;
 
+const getFanStyle = (idx: number, total: number): React.CSSProperties => {
+  const center = (total - 1) / 2;
+  const maxDistance = Math.max(center, 1);
+  const distanceFromCenter = Math.abs(idx - center);
+  const normalizedFromCenter = total <= 1 ? 0 : (idx - center) / maxDistance;
+  const edgeDistance = total <= 1 ? 0 : distanceFromCenter / maxDistance;
+  const centerLift = (1 - edgeDistance * edgeDistance) * 42;
+
+  return {
+    '--idx': idx,
+    '--total': total,
+    '--fan-rotate': `${normalizedFromCenter * 6}deg`,
+    '--fan-lift': `-${centerLift}px`,
+  } as React.CSSProperties;
+};
+
 const Hand: React.FC<HandProps> = ({
   cards,
   selectedCards,
@@ -33,12 +49,7 @@ const Hand: React.FC<HandProps> = ({
         <div
           key={`${cardKey(card)}-${idx}`}
           className="hand__card-wrapper"
-          style={
-            {
-              '--idx': idx,
-              '--total': visibleCards.length,
-            } as React.CSSProperties
-          }
+          style={getFanStyle(idx, visibleCards.length)}
         >
           <CardComponent
             card={card}

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Gets or Sets GamePhase
  */
 
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T10:10:21.786510900+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T10:35:20.534190700+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
 public enum GamePhaseDto {
   
   LOBBY("LOBBY"),

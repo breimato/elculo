@@ -26,7 +26,7 @@ const ExchangePanel: React.FC<ExchangePanelProps> = ({ roomState, myPlayer, hand
         <h2>Fase de Intercambio</h2>
         <p>
           {myPlayer.role === 'CULO'
-            ? `${ganadorPlayer?.nick ?? 'El ganador'} está eligiendo qué darte…`
+            ? `${ganadorPlayer?.nick ?? 'El ganador'} elige 2 cartas de su mano para darte…`
             : myPlayer.role === 'PENULTIMO'
             ? `${roomState.players.find((p) => p.role === 'SUBCAMPEON')?.nick ?? 'El subcampeón'} está eligiendo…`
             : 'Esperando al intercambio…'}

@@ -1,7 +1,6 @@
 package com.breixo.culo.application.usecase.game;
 
 import com.breixo.culo.domain.GamePhase;
-import com.breixo.culo.domain.PlayerRole;
 import com.breixo.culo.domain.RuleEngine;
 import com.breixo.culo.domain.command.game.PlayCardsCommand;
 import com.breixo.culo.domain.exception.GameException;
@@ -72,8 +71,7 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
 
     boolean roundEndedByPlin = false;
     if (gameEnded) {
-      room.setPhase(GamePhase.EXCHANGE);
-      this.triggerAutoExchange(room);
+      room.setPhase(GamePhase.DEALING);
     } else if (!isAsOros) {
       room.advanceTurn(plin);
       if (plin && this.closeRoundIfOthersAllPassed(room, round)) {
@@ -126,38 +124,4 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
     return cards;
   }
 
-  /**
-   * Prepara el intercambio automático: las mejores cartas del culo van al ganador
-   * y la mejor del penúltimo va al subcampeón. Todo lo automático ocurre aquí;
-   * el ganador/subcampeón elegirán qué devolver con ExchangeGiveUseCase.
-   */
-  private void triggerAutoExchange(final Room room) {
-    this.autoTransferBest(room, PlayerRole.CULO, PlayerRole.GANADOR, 2,
-        room.getPendingExchangeGanadorToCulo());
-    this.autoTransferBest(room, PlayerRole.PENULTIMO, PlayerRole.SUBCAMPEON, 1,
-        room.getPendingExchangeSubcampeonToPenultimo());
-  }
-
-  private void autoTransferBest(
-      final Room room,
-      final PlayerRole giver,
-      final PlayerRole receiver,
-      final int count,
-      final List<Card> pendingList) {
-    final var giverId = room.getPlayerIdByRole(giver);
-    final var receiverId = room.getPlayerIdByRole(receiver);
-    if (giverId.isEmpty() || receiverId.isEmpty()) {
-      return;
-    }
-    final var giverHand = room.getHand(giverId.get());
-    final var best = giverHand.stream()
-        .sorted((a, b) -> Integer.compare(
-            b.number() == 1 ? 999 : b.number(),
-            a.number() == 1 ? 999 : a.number()))
-        .limit(count)
-        .toList();
-    giverHand.removeAll(best);
-    room.getHand(receiverId.get()).addAll(best);
-    pendingList.addAll(best);
-  }
 }

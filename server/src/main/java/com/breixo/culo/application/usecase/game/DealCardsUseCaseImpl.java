@@ -7,11 +7,15 @@ import com.breixo.culo.domain.exception.GameException;
 import com.breixo.culo.domain.exception.RoomException;
 import com.breixo.culo.domain.exception.constants.GameExceptionConstants;
 import com.breixo.culo.domain.exception.constants.RoomExceptionConstants;
+import com.breixo.culo.domain.model.Card;
 import com.breixo.culo.domain.model.Room;
 import com.breixo.culo.domain.port.input.game.DealCardsUseCase;
 import com.breixo.culo.domain.port.output.room.RoomPersistencePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.EnumMap;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -38,7 +42,57 @@ public class DealCardsUseCaseImpl implements DealCardsUseCase {
     if (isFirstGame && !isHost) {
       throw new RoomException(RoomExceptionConstants.NOT_HOST);
     }
+
+    final var rolesBeforeDeal = this.captureExchangeRoles(room);
+    final var needsExchange = rolesBeforeDeal.containsKey(PlayerRole.GANADOR)
+        && rolesBeforeDeal.containsKey(PlayerRole.CULO);
+
     room.dealCards();
+
+    if (needsExchange) {
+      this.restoreExchangeRoles(room, rolesBeforeDeal);
+      this.transferBestCards(
+          room,
+          rolesBeforeDeal.get(PlayerRole.CULO),
+          rolesBeforeDeal.get(PlayerRole.GANADOR),
+          2);
+      room.setPhase(GamePhase.EXCHANGE);
+    } else {
+      room.setPhase(GamePhase.PLAYING);
+    }
+
     return this.roomPersistencePort.save(room);
+  }
+
+  private Map<PlayerRole, String> captureExchangeRoles(final Room room) {
+    final var roles = new EnumMap<PlayerRole, String>(PlayerRole.class);
+    room.getPlayerIdByRole(PlayerRole.GANADOR).ifPresent(id -> roles.put(PlayerRole.GANADOR, id));
+    room.getPlayerIdByRole(PlayerRole.CULO).ifPresent(id -> roles.put(PlayerRole.CULO, id));
+    room.getPlayerIdByRole(PlayerRole.SUBCAMPEON).ifPresent(id -> roles.put(PlayerRole.SUBCAMPEON, id));
+    room.getPlayerIdByRole(PlayerRole.PENULTIMO).ifPresent(id -> roles.put(PlayerRole.PENULTIMO, id));
+    return roles;
+  }
+
+  private void restoreExchangeRoles(final Room room, final Map<PlayerRole, String> rolesByPlayer) {
+    rolesByPlayer.forEach((role, playerId) ->
+        room.findPlayerById(playerId).ifPresent(p -> p.setRole(role)));
+  }
+
+  private void transferBestCards(
+      final Room room,
+      final String giverId,
+      final String receiverId,
+      final int count) {
+    final var giverHand = room.getHand(giverId);
+    final var best = giverHand.stream()
+        .sorted((a, b) -> Integer.compare(cardSortValue(b), cardSortValue(a)))
+        .limit(count)
+        .toList();
+    giverHand.removeAll(best);
+    room.getHand(receiverId).addAll(best);
+  }
+
+  private static int cardSortValue(final Card card) {
+    return card.number() == 1 ? 999 : card.number();
   }
 }

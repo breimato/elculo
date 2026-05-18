@@ -5,6 +5,7 @@ import CuloSwapModal from '../components/CuloSwapModal';
 import ExchangePanel from '../components/ExchangePanel';
 import FlyingPlayAnimation from '../components/FlyingPlayAnimation';
 import Hand from '../components/Hand';
+import PlinSplash from '../components/PlinSplash';
 import PlayerSlot from '../components/PlayerSlot';
 import TablePile, { type TablePilePlay } from '../components/TablePile';
 import { useGameStore } from '../store/gameStore';
@@ -55,6 +56,7 @@ const Game: React.FC = () => {
   const [centerPlay, setCenterPlay] = useState<TablePilePlay | null>(null);
   const [flyingCards, setFlyingCards] = useState<Card[] | null>(null);
   const [hiddenFromHand, setHiddenFromHand] = useState<Card[]>([]);
+  const [plinSplash, setPlinSplash] = useState<{ id: number; nick: string } | null>(null);
 
   const cleanupRef = useRef<(() => void)[]>([]);
   const isFlyingRef = useRef(false);
@@ -80,11 +82,19 @@ const Game: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const showPlinSplash = useCallback((nick: string) => {
+    setPlinSplash({ id: Date.now(), nick });
+  }, []);
+
   const handlePlayMade = useCallback(
     (pm: PlayMade) => {
       const nick = resolveNick(pm.playerId);
-      const suffix = pm.plin ? ' ¡PLIN!' : pm.isAsOros ? ' ¡As de Oros!' : '';
-      showNotification(`${nick} jugó ${pm.cards.length} carta(s)${suffix}`);
+      if (pm.plin) {
+        showPlinSplash(nick);
+      } else {
+        const suffix = pm.isAsOros ? ' ¡As de Oros!' : '';
+        showNotification(`${nick} jugó ${pm.cards.length} carta(s)${suffix}`);
+      }
 
       if (pm.playerId === playerIdRef.current && isFlyingRef.current) {
         setFlyingCards([...lastLocalPlayRef.current]);
@@ -92,7 +102,7 @@ const Game: React.FC = () => {
       }
       showTablePlay(pm.cards, nick);
     },
-    [showTablePlay],
+    [showTablePlay, showPlinSplash],
   );
 
   const abortPendingPlay = useCallback(() => {
@@ -339,6 +349,16 @@ const Game: React.FC = () => {
       {flyingCards && (
         <FlyingPlayAnimation cards={flyingCards} onComplete={handleFlyComplete} />
       )}
+
+      <AnimatePresence>
+        {plinSplash && (
+          <PlinSplash
+            key={plinSplash.id}
+            playerNick={plinSplash.nick}
+            onComplete={() => setPlinSplash(null)}
+          />
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {notification && (

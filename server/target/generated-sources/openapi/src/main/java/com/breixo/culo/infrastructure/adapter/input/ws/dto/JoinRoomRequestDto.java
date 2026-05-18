@@ -19,7 +19,7 @@ import jakarta.annotation.Generated;
  */
 
 @JsonTypeName("JoinRoomRequest")
-@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T01:54:00.528300900+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
+@Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2026-05-18T10:10:21.786510900+02:00[Europe/Madrid]", comments = "Generator version: 7.9.0")
 public class JoinRoomRequestDto {
 
   private String clientId;

@@ -58,9 +58,7 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
     if (isAsOros) {
       round.reset();
     } else if (plin) {
-      final var skippedPlayerId = room.getActivePlayerCount() > 2
-          ? room.getNextActivePlayerId()
-          : null;
+      final var skippedPlayerId = room.getNextActivePlayerId();
       round.registerPlinPlay(play, player.getId(), skippedPlayerId);
     } else {
       round.registerPlay(play, player.getId());
@@ -77,8 +75,7 @@ public class PlayCardsUseCaseImpl implements PlayCardsUseCase {
       room.setPhase(GamePhase.EXCHANGE);
       this.triggerAutoExchange(room);
     } else if (!isAsOros) {
-      final var skipNextPlayer = plin && room.getActivePlayerCount() > 2;
-      room.advanceTurn(skipNextPlayer);
+      room.advanceTurn(plin);
       if (plin && this.closeRoundIfOthersAllPassed(room, round)) {
         roundEndedByPlin = true;
       }

@@ -145,11 +145,10 @@ class RuleEngineTest {
     }
 
     @Test
-    void testIsRoundOver_whenPlinInTwoPlayersAndOpponentPassed_thenOver() {
+    void testIsRoundOver_whenPlinInTwoPlayersAndOpponentSkipped_thenOverImmediately() {
         final var round = new Round();
         round.registerPlay(makePair(7), "player-a");
-        round.registerPlinPlay(makePair(7), "player-b", null);
-        round.registerPass("player-a");
+        round.registerPlinPlay(makePair(7), "player-b", "player-a");
 
         assertTrue(this.ruleEngine.isRoundOver(round, List.of("player-a", "player-b")));
     }
